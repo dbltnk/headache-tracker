@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charsetW="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headache Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 375px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .emoji-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .emoji-scale span {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .emoji-scale span.selected {
+            transform: scale(1.2);
+            border-bottom: 2px solid #3498db;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day {
+            padding: 5px;
+            text-align: center;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        .calendar-day.has-entry {
+            background-color: #e0f7fa;
+        }
+
+        #log {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .top-nav {
+            display: flex;
+            justify-content: space-around;
+            background-color: #3498db;
+            padding: 10px 0;
+        }
+
+        .top-nav a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .log-entry {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+
+        .chart-explanation {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="home-screen">
+            <h1>Headache Tracker</h1>
+            <button class="btn" data-screen="log-headache">🤕 Log Headache</button>
+            <button class="btn" data-screen="daily-checkin">📝 Daily Check-in</button>
+            <button class="btn" data-screen="past">📅 Past</button>
+            <button class="btn" data-screen="analysis">📊 Analysis</button>
+            <button class="btn" data-screen="settings">⚙️ Settings</button>
+        </div>
+
+        <div id="log-headache" class="hidden">
+            <div class="top-nav">
+                <a href="#" data-screen="log-headache">Log</a>
+                <a href="#" data-screen="daily-checkin">Check-in</a>
+                <a href="#" data-screen="past">Past</a>
+                <a href="#" data-screen="analysis">Analysis</a>
+                <a href="#" data-screen="settings">Settings</a>
+            </div>
+            <h2>Log Headache</h2>
+            <div class="form-group">
+                <label>Intensity:</label>
+                <div class="emoji-scale" id="headache-intensity">
+                    <span data-value="1">😊</span>
+                    <span data-value="2">😐</span>
+                    <span data-value="3">🙁</span>
+                    <span data-value="4">😣</span>
+                    <span data-value="5">😫</span>
+                    <span data-value="6">😭</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="duration">Duration:</label>
+                <input type="range" id="duration" min="0.25" max="24" step="0.25" value="1">
+                <span id="duration-value">1 hour</span>
+            </div>
+            <div class="form-group">
+                <label for="timestamp">Time:</label>
+                <input type="datetime-local" id="timestamp">
+            </div>
+            <button class="btn" id="save-headache">Save</button>
+            <button class="btn" data-screen="home-screen">Back to Home</button>
+        </div>
+
+        <div id="daily-checkin" class="hidden">
+            <div class="top-nav">
+                <a href="#" data-screen="log-headache">Log</a>
+                <a href="#" data-screen="daily-checkin">Check-in</a>
+                <a href="#" data-screen="past">Past</a>
+                <a href="#" data-screen="analysis">Analysis</a>
+                <a href="#" data-screen="settings">Settings</a>
+            </div>
+            <h2>Daily Check-in</h2>
+            <div id="checkin-fields"></div>
+            <button class="btn" id="save-checkin">Save</button>
+            <button class="btn" data-screen="home-screen">Back to Home</button>
+        </div>
+
+        <div id="past" class="hidden">
+            <div class="top-nav">
+                <a href="#" data-screen="log-headache">Log</a>
+                <a href="#" data-screen="daily-checkin">Check-in</a>
+                <a href="#" data-screen="past">Past</a>
+                <a href="#" data-screen="analysis">Analysis</a>
+                <a href="#" data-screen="settings">Settings</a>
+            </div>
+            <h2>Past Entries</h2>
+            <div id="calendar"></div>
+            <div id="log"></div>
+            <button class="btn" data-screen="home-screen">Back to Home</button>
+        </div>
+
+        <div id="day-detail" class="hidden">
+            <div class="top-nav">
+                <a href="#" data-screen="log-headache">Log</a>
+                <a href="#" data-screen="daily-checkin">Check-in</a>
+                <a href="#" data-screen="past">Past</a>
+                <a href="#" data-screen="analysis">Analysis</a>
+                <a href="#" data-screen="settings">Settings</a>
+            </div>
+            <h2>Day Detail</h2>
+            <div id="day-headaches"></div>
+            <div id="day-checkin"></div>
+            <button class="btn" id="save-day-detail">Save Changes</button>
+            <button class="btn" data-screen="past">Back to Past</button>
+        </div>
+
+        <div id="analysis" class="hidden">
+            <div class="top-nav">
+                <a href="#" data-screen="log-headache">Log</a>
+                <a href="#" data-screen="daily-checkin">Check-in</a>
+                <a href="#" data-screen="past">Past</a>
+                <a href="#" data-screen="analysis">Analysis</a>
+                <a href="#" data-screen="settings">Settings</a>
+            </div>
+            <h2>Analysis</h2>
+            <div id="correlation-results"></div>
+            <button class="btn" data-screen="home-screen">Back to Home</button>
+        </div>
+
+        <div id="settings" class="hidden">
+            <div class="top-nav">
+                <a href="#" data-screen="log-headache">Log</a>
+                <a href="#" data-screen="daily-checkin">Check-in</a>
+                <a href="#" data-screen="past">Past</a>
+                <a href="#" data-screen="analysis">Analysis</a>
+                <a href="#" data-screen="settings">Settings</a>
+            </div>
+            <h2>Settings</h2>
+            <div id="custom-fields-list"></div>
+            <button class="btn" id="add-custom-field">+ Add Custom Field</button>
+            <button class="btn" id="export-data">Export Data</button>
+            <button class="btn" id="import-data">Import Data</button>
+            <button class="btn" id="delete-data">Delete Local Data</button>
+            <button class="btn" id="fill-dummy-data">Fill with Dummy Data</button>
+            <button class="btn" data-screen="home-screen">Back to Home</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const app = {
+                currentScreen: 'home-screen',
+                headaches: [],
+                checkins: [],
+                customFields: [
+                    { name: "Sleep Quality", type: "emoji-scale" },
+                    { name: "Stress Level", type: "emoji-scale" },
+                    { name: "Water Intake", type: "range", min: 0, max: 4, step: 0.1, unit: "liters" },
+                    { name: "Caffeine Intake", type: "range", min: 0, max: 10, step: 1, unit: "cups" },
+                    { name: "Exercise Duration", type: "range", min: 0, max: 180, step: 5, unit: "minutes" },
+                    { name: "Screen Time", type: "range", min: 0, max: 24, step: 0.5, unit: "hours" },
+                    { name: "Medication", type: "text" },
+                    { name: "Mood", type: "emoji-scale" },
+                    { name: "Diet Quality", type: "emoji-scale" },
+                    { name: "Weather", type: "text" }
+                ],
+
+                init: function () {
+                    this.headaches = JSON.parse(localStorage.getItem('headaches')) || [];
+                    this.checkins = JSON.parse(localStorage.getItem('checkins')) || [];
+                    this.customFields = JSON.parse(localStorage.getItem('customFields')) || this.customFields;
+                    this.bindEvents();
+                    this.showScreen('home-screen');
+                },
+
+                bindEvents: function () {
+                    document.querySelectorAll('[data-screen]').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.showScreen(button.dataset.screen);
+                        });
+                    });
+
+                    document.getElementById('headache-intensity').addEventListener('click', (e) => {
+                        if (e.target.tagName === 'SPAN') {
+                            this.setIntensity(e.target.dataset.value, e.target);
+                        }
+                    });
+
+                    document.getElementById('save-headache').addEventListener('click', () => this.saveHeadache());
+                    document.getElementById('add-custom-field').addEventListener('click', () => this.addCustomField());
+                    document.getElementById('save-checkin').addEventListener('click', () => this.saveCheckin());
+                    document.getElementById('delete-data').addEventListener('click', () => this.deleteData());
+                    document.getElementById('fill-dummy-data').addEventListener('click', () => this.fillDummyData());
+                    document.getElementById('save-day-detail').addEventListener('click', () => this.saveDayDetail());
+                    document.getElementById('export-data').addEventListener('click', () => this.exportData());
+                    document.getElementById('import-data').addEventListener('click', () => this.importData());
+
+                    const durationSlider = document.getElementById('duration');
+                    const durationValue = document.getElementById('duration-value');
+                    durationSlider.addEventListener('input', function () {
+                        const hours = Math.floor(this.value);
+                        const minutes = Math.round((this.value - hours) * 60);
+                        durationValue.textContent = hours > 0 ?
+                            `${hours} hour${hours > 1 ? 's' : ''}${minutes > 0 ? ` ${minutes} minutes` : ''}` :
+                            `${minutes} minutes`;
+                    });
+                },
+
+                exportData: function () {
+                    const data = {
+                        headaches: this.headaches,
+                        checkins: this.checkins,
+                        customFields: this.customFields
+                    };
+                    const dataStr = JSON.stringify(data, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                    const exportFileDefaultName = 'headache_tracker_data.json';
+
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                },
+
+                importData: function () {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = e => {
+                        const file = e.target.files[0];
+                        const reader = new FileReader();
+                        reader.readAsText(file, 'UTF-8');
+                        reader.onload = readerEvent => {
+                            const content = readerEvent.target.result;
+                            try {
+                                const data = JSON.parse(content);
+                                this.headaches = data.headaches || [];
+                                this.checkins = data.checkins || [];
+                                this.customFields = data.customFields || this.customFields;
+                                localStorage.setItem('headaches', JSON.stringify(this.headaches));
+                                localStorage.setItem('checkins', JSON.stringify(this.checkins));
+                                localStorage.setItem('customFields', JSON.stringify(this.customFields));
+                                alert('Data imported successfully!');
+                                this.showScreen('home-screen');
+                            } catch (err) {
+                                alert('Error importing data. Please make sure the file is a valid JSON export from Headache Tracker.');
+                            }
+                        }
+                    }
+                    input.click();
+                },
+
+                showScreen: function (screenId) {
+                    document.getElementById(this.currentScreen).classList.add('hidden');
+                    document.getElementById(screenId).classList.remove('hidden');
+                    this.currentScreen = screenId;
+
+                    if (screenId === 'past') {
+                        this.displayCalendar();
+                        this.displayLog();
+                    } else if (screenId === 'analysis') {
+                        this.performAnalysis();
+                    } else if (screenId === 'daily-checkin') {
+                        this.renderCheckinFields();
+                    } else if (screenId === 'log-headache') {
+                        document.getElementById('timestamp').value = new Date().toISOString().slice(0, 16);
+                    } else if (screenId === 'settings') {
+                        this.displayCustomFields();
+                    }
+                },
+
+                setIntensity: function (value, elem) {
+                    const scale = document.getElementById('headache-intensity');
+                    scale.querySelectorAll('span').forEach(span => span.classList.remove('selected'));
+                    elem.classList.add('selected');
+                    scale.setAttribute('data-value', value);
+                },
+
+                saveHeadache: function () {
+                    const intensity = document.getElementById('headache-intensity').getAttribute('data-value');
+                    const duration = document.getElementById('duration').value;
+                    const timestamp = document.getElementById('timestamp').value;
+
+                    if (!intensity) {
+                        alert('Please select an intensity');
+                        return;
+                    }
+
+                    this.headaches.push({ intensity, duration, timestamp });
+                    localStorage.setItem('headaches', JSON.stringify(this.headaches));
+
+                    alert('Headache logged successfully!');
+                    this.showScreen('past');
+                },
+
+                renderCheckinFields: function () {
+                    const container = document.getElementById('checkin-fields');
+                    container.innerHTML = '';
+
+                    this.customFields.forEach((field, index) => {
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.className = 'form-group';
+                        fieldDiv.innerHTML = `<label>${field.name}:</label>`;
+
+                        if (field.type === 'emoji-scale') {
+                            const emojiScale = document.createElement('div');
+                            emojiScale.className = 'emoji-scale';
+                            emojiScale.innerHTML = `
+                                <span data-value="1">😊</span>
+<span data-value="2">😐</span>
+                                <span data-value="3">🙁</span>
+                                <span data-value="4">😣</span>
+                                <span data-value="5">😫</span>
+                                <span data-value="6">😭</span>
+                            `;
+                            emojiScale.addEventListener('click', (e) => {
+                                if (e.target.tagName === 'SPAN') {
+                                    this.setEmojiValue(index, e.target.dataset.value, e.target);
+                                }
+                            });
+                            fieldDiv.appendChild(emojiScale);
+                        } else if (field.type === 'range') {
+                            const input = document.createElement('input');
+                            input.type = 'range';
+                            input.min = field.min;
+                            input.max = field.max;
+                            input.step = field.step;
+                            input.value = (field.min + field.max) / 2;
+                            const valueDisplay = document.createElement('span');
+                            valueDisplay.textContent = `${input.value} ${field.unit}`;
+                            input.oninput = () => valueDisplay.textContent = `${input.value} ${field.unit}`;
+                            fieldDiv.appendChild(input);
+                            fieldDiv.appendChild(valueDisplay);
+                        } else {
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            fieldDiv.appendChild(input);
+                        }
+
+                        container.appendChild(fieldDiv);
+                    });
+                },
+
+                setEmojiValue: function (fieldIndex, value, elem) {
+                    const scale = elem.parentElement;
+                    scale.querySelectorAll('span').forEach(span => span.classList.remove('selected'));
+                    elem.classList.add('selected');
+                    scale.setAttribute('data-value', value);
+                },
+
+                addCustomField: function () {
+                    const fieldName = prompt("Enter the name for the new field:");
+                    if (fieldName) {
+                        this.customFields.push({ name: fieldName, type: "text" });
+                        localStorage.setItem('customFields', JSON.stringify(this.customFields));
+                        this.displayCustomFields();
+                    }
+                },
+
+                saveCheckin: function () {
+                    const checkin = { date: new Date().toISOString().slice(0, 10) };
+                    this.customFields.forEach((field, index) => {
+                        const fieldElement = document.getElementById('checkin-fields').children[index];
+                        if (field.type === 'emoji-scale') {
+                            checkin[field.name] = fieldElement.querySelector('.emoji-scale').getAttribute('data-value');
+                        } else if (field.type === 'range') {
+                            checkin[field.name] = fieldElement.querySelector('input').value;
+                        } else {
+                            checkin[field.name] = fieldElement.querySelector('input').value;
+                        }
+                    });
+
+                    this.checkins.push(checkin);
+                    localStorage.setItem('checkins', JSON.stringify(this.checkins));
+
+                    alert('Daily check-in saved successfully!');
+                    this.showScreen('past');
+                },
+
+                displayCalendar: function () {
+                    const calendar = document.getElementById('calendar');
+                    calendar.innerHTML = '';
+
+                    const today = new Date();
+                    const month = today.getMonth();
+                    const year = today.getFullYear();
+
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+                    for (let i = 0; i < firstDayOfMonth; i++) {
+                        calendar.appendChild(document.createElement('div'));
+                    }
+
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const dayElement = document.createElement('div');
+                        dayElement.className = 'calendar-day';
+                        dayElement.textContent = day;
+
+                        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        if (this.headaches.some(h => h.timestamp.startsWith(dateString)) ||
+                            this.checkins.some(c => c.date === dateString)) {
+                            dayElement.classList.add('has-entry');
+                        }
+
+                        dayElement.addEventListener('click', () => this.showDayDetail(dateString));
+                        calendar.appendChild(dayElement);
+                    }
+                },
+
+                displayLog: function () {
+                    const log = document.getElementById('log');
+                    log.innerHTML = '';
+
+                    const allEntries = [...this.headaches, ...this.checkins].sort((a, b) =>
+                        new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date)
+                    );
+
+                    allEntries.forEach(entry => {
+                        const entryDiv = document.createElement('div');
+                        entryDiv.className = 'log-entry';
+                        if ('intensity' in entry) {
+                            entryDiv.innerHTML = `
+                                <strong>Headache on ${entry.timestamp.split('T')[0]}</strong><br>
+                                Intensity: ${entry.intensity}<br>
+                                Duration: ${entry.duration} hours<br>
+                                Time: ${entry.timestamp.split('T')[1]}
+                            `;
+                        } else {
+                            entryDiv.innerHTML = `
+                                <strong>Check-in on ${entry.date}</strong><br>
+                                ${Object.entries(entry)
+                                    .filter(([key]) => key !== 'date')
+                                    .map(([key, value]) => `${key}: ${value}`)
+                                    .join('<br>')}
+                            `;
+                        }
+                        log.appendChild(entryDiv);
+                    });
+                },
+
+                showDayDetail: function (date) {
+                    const dayHeadaches = this.headaches.filter(h => h.timestamp.startsWith(date));
+                    const dayCheckin = this.checkins.find(c => c.date === date);
+
+                    const dayHeadachesContainer = document.getElementById('day-headaches');
+                    const dayCheckinContainer = document.getElementById('day-checkin');
+
+                    dayHeadachesContainer.innerHTML = '<h3>Headaches</h3>';
+                    dayCheckinContainer.innerHTML = '<h3>Daily Check-in</h3>';
+
+                    dayHeadaches.forEach((headache, index) => {
+                        const headacheDiv = document.createElement('div');
+                        headacheDiv.innerHTML = `
+                            <h4>Headache ${index + 1}</h4>
+                            <label>Intensity: <input type="number" min="1" max="6" value="${headache.intensity}"></label><br>
+                            <label>Duration: <input type="number" min="0.25" max="24" step="0.25" value="${headache.duration}"></label><br>
+                            <label>Time: <input type="time" value="${headache.timestamp.split('T')[1].slice(0, 5)}"></label>
+                        `;
+                        dayHeadachesContainer.appendChild(headacheDiv);
+                    });
+
+                    if (dayCheckin) {
+                        Object.entries(dayCheckin).forEach(([key, value]) => {
+                            if (key !== 'date') {
+                                const field = this.customFields.find(f => f.name === key);
+                                const fieldDiv = document.createElement('div');
+                                fieldDiv.innerHTML = `<label>${key}: `;
+                                if (field && field.type === 'emoji-scale') {
+                                    fieldDiv.innerHTML += `<input type="number" min="1" max="6" value="${value}">`;
+                                } else if (field && field.type === 'range') {
+                                    fieldDiv.innerHTML += `<input type="number" min="${field.min}" max="${field.max}" step="${field.step}" value="${value}">`;
+                                } else {
+                                    fieldDiv.innerHTML += `<input type="text" value="${value}">`;
+                                }
+                                fieldDiv.innerHTML += '</label>';
+                                dayCheckinContainer.appendChild(fieldDiv);
+                            }
+                        });
+                    }
+
+                    this.showScreen('day-detail');
+                },
+
+                saveDayDetail: function () {
+                    const date = document.querySelector('#day-headaches input[type="time"]').closest('div').querySelector('h4').textContent.split(' ')[1];
+
+                    // Update headaches
+                    const headacheDivs = document.querySelectorAll('#day-headaches > div');
+                    headacheDivs.forEach((div, index) => {
+                        const intensity = div.querySelector('input[type="number"]').value;
+                        const duration = div.querySelectorAll('input[type="number"]')[1].value;
+                        const time = div.querySelector('input[type="time"]').value;
+
+                        this.headaches[this.headaches.findIndex(h => h.timestamp.startsWith(date))].intensity = intensity;
+                        this.headaches[this.headaches.findIndex(h => h.timestamp.startsWith(date))].duration = duration;
+                        this.headaches[this.headaches.findIndex(h => h.timestamp.startsWith(date))].timestamp = `${date}T${time}:00`;
+                    });
+
+                    // Update check-in
+                    const checkinInputs = document.querySelectorAll('#day-checkin input');
+                    const checkinIndex = this.checkins.findIndex(c => c.date === date);
+                    checkinInputs.forEach(input => {
+                        const key = input.closest('div').textContent.split(':')[0];
+                        this.checkins[checkinIndex][key] = input.value;
+                    });
+
+                    localStorage.setItem('headaches', JSON.stringify(this.headaches));
+                    localStorage.setItem('checkins', JSON.stringify(this.checkins));
+
+                    alert('Day details updated successfully!');
+                    this.showScreen('past');
+                },
+
+                performAnalysis: function () {
+                    const correlationResults = document.getElementById('correlation-results');
+                    correlationResults.innerHTML = '';
+
+                    // Headache frequency over time
+                    const headacheFrequencyChart = document.createElement('div');
+                    headacheFrequencyChart.className = 'chart-container';
+                    headacheFrequencyChart.innerHTML = '<canvas></canvas>';
+                    correlationResults.appendChild(headacheFrequencyChart);
+
+                    new Chart(headacheFrequencyChart.querySelector('canvas'), {
+                        type: 'line',
+                        data: {
+                            labels: this.headaches.map(h => h.timestamp.split('T')[0]),
+                            datasets: [{
+                                label: 'Headache Intensity',
+                                data: this.headaches.map(h => h.intensity),
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 6
+                                }
+                            }
+                        }
+                    });
+
+                    const frequencyExplanation = document.createElement('p');
+                    frequencyExplanation.className = 'chart-explanation';
+                    frequencyExplanation.textContent = 'This chart shows the intensity of your headaches over time. Higher points indicate more severe headaches.';
+                    correlationResults.appendChild(frequencyExplanation);
+
+                    // Correlation analysis
+                    const correlations = this.calculateCorrelations();
+                    const correlationChart = document.createElement('div');
+                    correlationChart.className = 'chart-container';
+                    correlationChart.innerHTML = '<canvas></canvas>';
+                    correlationResults.appendChild(correlationChart);
+
+                    new Chart(correlationChart.querySelector('canvas'), {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(correlations),
+                            datasets: [{
+                                label: 'Correlation with Headache Intensity',
+                                data: Object.values(correlations),
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 1
+                                }
+                            }
+                        }
+                    });
+
+                    const correlationExplanation = document.createElement('p');
+                    correlationExplanation.className = 'chart-explanation';
+                    correlationExplanation.textContent = 'This chart shows the correlation between various factors and your headache intensity. Positive values indicate that as the factor increases, headache intensity tends to increase. Negative values indicate that as the factor increases, headache intensity tends to decrease.';
+                    correlationResults.appendChild(correlationExplanation);
+                },
+
+                calculateCorrelations: function () {
+                    const correlations = {};
+                    this.customFields.forEach(field => {
+                        const factorValues = this.checkins.map(c => parseFloat(c[field.name])).filter(v => !isNaN(v));
+                        const headacheIntensities = this.headaches.map(h => parseFloat(h.intensity));
+                        correlations[field.name] = this.pearsonCorrelation(factorValues, headacheIntensities);
+                    });
+                    return correlations;
+                },
+
+                pearsonCorrelation: function (x, y) {
+                    const n = x.length;
+                    let sum_x = 0, sum_y = 0, sum_xy = 0, sum_x2 = 0, sum_y2 = 0;
+                    for (let i = 0; i < n; i++) {
+                        sum_x += x[i];
+                        sum_y += y[i];
+                        sum_xy += x[i] * y[i];
+                        sum_x2 += x[i] * x[i];
+                        sum_y2 += y[i] * y[i];
+                    }
+                    const numerator = n * sum_xy - sum_x * sum_y;
+                    const denominator = Math.sqrt((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y));
+                    return numerator / denominator;
+                },
+
+                displayCustomFields: function () {
+                    const container = document.getElementById('custom-fields-list');
+                    container.innerHTML = '<h3>Custom Fields</h3>';
+                    this.customFields.forEach((field, index) => {
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.innerHTML = `
+                            ${field.name} (${field.type})
+                            <button onclick="app.deleteCustomField(${index})">Delete</button>
+                        `;
+                        container.appendChild(fieldDiv);
+                    });
+                },
+
+                deleteCustomField: function (index) {
+                    if (confirm(`Are you sure you want to delete the field "${this.customFields[index].name}"?`)) {
+                        this.customFields.splice(index, 1);
+                        localStorage.setItem('customFields', JSON.stringify(this.customFields));
+                        this.displayCustomFields();
+                    }
+                },
+
+                deleteData: function () {
+                    if (confirm('Are you sure you want to delete all data? This action cannot be undone.')) {
+                        localStorage.clear();
+                        this.headaches = [];
+                        this.checkins = [];
+                        this.customFields = [
+                            { name: "Sleep Quality", type: "emoji-scale" },
+                            { name: "Stress Level", type: "emoji-scale" },
+                            { name: "Water Intake", type: "range", min: 0, max: 4, step: 0.1, unit: "liters" },
+                            { name: "Caffeine Intake", type: "range", min: 0, max: 10, step: 1, unit: "cups" },
+                            { name: "Exercise Duration", type: "range", min: 0, max: 180, step: 5, unit: "minutes" },
+                            { name: "Screen Time", type: "range", min: 0, max: 24, step: 0.5, unit: "hours" },
+                            { name: "Medication", type: "text" },
+                            { name: "Mood", type: "emoji-scale" },
+                            { name: "Diet Quality", type: "emoji-scale" },
+                            { name: "Weather", type: "text" }
+                        ];
+                        localStorage.setItem('customFields', JSON.stringify(this.customFields));
+                        alert('All data has been deleted.');
+                        this.showScreen('home-screen');
+                    }
+                },
+
+                fillDummyData: function () {
+                    const today = new Date();
+                    const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
+
+                    this.headaches = [];
+                    this.checkins = [];
+
+                    for (let i = 0; i < 30; i++) {
+                        const date = new Date(today - i * oneDay);
+                        const dateString = date.toISOString().split('T')[0];
+
+                        // Add headache (50% chance)
+                        if (Math.random() < 0.5) {
+                            this.headaches.push({
+                                intensity: Math.floor(Math.random() * 6) + 1,
+                                duration: Math.round((Math.random() * 23.75 + 0.25) * 4) / 4,
+                                timestamp: `${dateString}T${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`
+                            });
+                        }
+
+                        // Add daily check-in
+                        const checkin = { date: dateString };
+                        this.customFields.forEach(field => {
+                            if (field.type === 'emoji-scale') {
+                                checkin[field.name] = Math.floor(Math.random() * 6) + 1;
+                            } else if (field.type === 'range') {
+                                checkin[field.name] = Math.round((Math.random() * (field.max - field.min) + field.min) / field.step) * field.step;
+                            } else {
+                                checkin[field.name] = ['None', 'Low', 'Medium', 'High'][Math.floor(Math.random() * 4)];
+                            }
+                        });
+                        this.checkins.push(checkin);
+                    }
+
+                    localStorage.setItem('headaches', JSON.stringify(this.headaches));
+                    localStorage.setItem('checkins', JSON.stringify(this.checkins));
+                    alert('Dummy data has been added.');
+                    this.showScreen('past');
+                }
+            };
+
+            app.init();
+        });
+    </script>
+</body>
+
+</html>
